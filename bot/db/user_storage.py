@@ -9,7 +9,7 @@ from bot.db.models import User
 from bot.user_dto import UserDTO
 
 
-DATABASE_URL = f"postgresql+asyncpg://{env_config.postgresql_username}:{env_config.postgresql_password.get_secret_value()}@{env_config.postgresql_hostname}:{env_config.postgresql_port}/{env_config.postgresql_database}"
+DATABASE_URL = f"postgresql+psycopg://{env_config.postgresql_username}:{env_config.postgresql_password.get_secret_value()}@{env_config.postgresql_hostname}:{env_config.postgresql_port}/{env_config.postgresql_database}"
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 

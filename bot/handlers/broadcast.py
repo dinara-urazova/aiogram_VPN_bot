@@ -22,7 +22,6 @@ async def cmd_broadcast(message: Message, state: FSMContext):
 
 @router.message(BroadcastState.waiting_for_text)
 async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
-    await state.clear()
     broadcast_text = message.text
 
     users = await user_storage.get_all_users()
@@ -33,5 +32,5 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
             await bot.send_message(chat_id=user.telegram_id, text=custom_text)
         except Exception as e:
             print(f"Ошибка при отправке пользователю {user.telegram_id}: {e}")
-
+    await state.clear()
     await message.answer("Рассылка отправлена!")
