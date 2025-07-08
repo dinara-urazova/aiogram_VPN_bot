@@ -24,4 +24,3 @@ async def connect_button(message: Message):
 @router.message()
 async def debug_all_messages(message: Message):
     print(f"[DEBUG] got message: {message.text!r}")
-    await message.continue_propagation()

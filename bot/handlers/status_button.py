@@ -4,6 +4,7 @@ from bot.keyboards import go_back_kb
 
 router = Router()
 
+
 @router.message(F.text == "ℹ️ Статус")
 async def status_button(message: Message):
     text = (
