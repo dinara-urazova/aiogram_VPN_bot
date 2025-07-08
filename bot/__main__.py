@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 import logging
 from bot.handlers import (
+    register_user,
     cmd_start,
     connect_button,
     status_button,
@@ -10,7 +11,6 @@ from bot.handlers import (
     go_back_handler,
     subscription_handler,
     broadcast,
-    register_user,
 )
 import sys
 from bot.config_reader import env_config
@@ -24,6 +24,7 @@ bot = Bot(token=tg_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML
 
 dp = Dispatcher()
 dp.include_routers(
+    register_user.router,
     cmd_start.router,
     connect_button.router,
     status_button.router,
@@ -32,7 +33,6 @@ dp.include_routers(
     go_back_handler.router,
     subscription_handler.router,
     broadcast.router,
-    register_user.router,
 )
 
 

@@ -21,3 +21,5 @@ async def register_user(message: Message):
             username=user.username,
         )
         await user_storage.add_user(user_dto)
+    
+    print(f"User {message.from_user.id} action detected")
