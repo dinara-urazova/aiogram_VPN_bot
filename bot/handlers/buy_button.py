@@ -5,7 +5,7 @@ from bot.keyboards import buy_kb
 router = Router()
 
 
-@router.message(F.text == ("🔥 Купить"))
+@router.message(F.text == "🔥 Купить")
 async def buy_button(message: Message):
     text = (
         "Для полного доступа выберите удобный для вас тариф:\n\n"

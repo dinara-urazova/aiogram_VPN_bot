@@ -4,7 +4,7 @@ from bot.keyboards import help_kb
 
 router = Router()
 
-@router.message(F.text == ("❓ Помощь"))
+@router.message(F.text == "❓ Помощь")
 async def help_button(message: Message):
     text = (
         "Если у вас проблемы с подключением, отправьте статус из бота и скриншот из приложения, которым вы пользуетесь для доступа к VPN в поддержку.\n\n"
@@ -12,4 +12,7 @@ async def help_button(message: Message):
     )
     await message.answer(text, reply_markup=help_kb())
 
-
+@router.message()
+async def debug_all_messages(message: Message):
+    print(f"Debug: received message text: {message.text!r}")
+    await message.continue_propagation()
