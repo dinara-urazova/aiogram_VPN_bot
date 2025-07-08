@@ -25,14 +25,15 @@ bot = Bot(token=tg_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML
 dp = Dispatcher()
 dp.include_routers(
     cmd_start.router,
-    status_button.router,
     connect_button.router,
+    register_user.router,
+    status_button.router,
     buy_button.router,
     help_button.router,
     go_back_handler.router,
     subscription_handler.router,
     broadcast.router,
-    register_user.router,
+   
 )
 
 

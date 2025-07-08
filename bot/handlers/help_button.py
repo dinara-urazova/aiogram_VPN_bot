@@ -12,8 +12,3 @@ async def help_button(message: Message):
         "Ниже представлены инструкции для подключения к сервису ↓"
     )
     await message.answer(text, reply_markup=help_kb())
-
-
-@router.message()
-async def debug_all_messages(message: Message):
-    print(f"Debug: received message text: {message.text!r}")

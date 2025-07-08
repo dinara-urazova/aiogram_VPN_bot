@@ -21,10 +21,3 @@ async def register_user(message: Message):
             username=user.username,
         )
         await user_storage.add_user(user_dto)
-    await message.continue_propagation()  # чтобы другие хендлеры могли обрабатывать апдейты
-
-
-@router.message()
-async def debug_all_messages(message: Message):
-    print(f"Debug: received message text: {message.text!r}")
-    await message.continue_propagation()

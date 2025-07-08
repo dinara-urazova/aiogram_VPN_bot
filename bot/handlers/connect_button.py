@@ -19,8 +19,3 @@ async def connect_button(message: Message):
         "<i>Тапните чтобы скопировать в буфер обмена ↓</i>"
     )
     await message.answer(text, reply_markup=connection_kb())
-
-
-@router.message()
-async def debug_all_messages(message: Message):
-    print(f"[DEBUG] got message: {message.text!r}")
