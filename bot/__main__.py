@@ -4,13 +4,13 @@ import logging
 from bot.handlers import (
     cmd_start,
     connect_button,
-    register_user,
     status_button,
     buy_button,
     help_button,
     go_back_handler,
     subscription_handler,
     broadcast,
+    register_user,
 )
 import sys
 from bot.config_reader import env_config
@@ -26,14 +26,13 @@ dp = Dispatcher()
 dp.include_routers(
     cmd_start.router,
     connect_button.router,
-    register_user.router,
     status_button.router,
     buy_button.router,
     help_button.router,
     go_back_handler.router,
     subscription_handler.router,
     broadcast.router,
-   
+    register_user.router,
 )
 
 
