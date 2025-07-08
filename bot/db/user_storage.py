@@ -52,15 +52,3 @@ async def create_schema() -> None:
 async def drop_schema() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-
-
-async def add_user(user_dto: UserDTO) -> None:
-    async with async_session() as session:
-        user = User(
-            telegram_id=user_dto.telegram_id,
-            first_name=user_dto.first_name,
-            last_name=user_dto.last_name,
-            username=user_dto.username,
-        )
-        session.add(user)
-        await session.commit()
