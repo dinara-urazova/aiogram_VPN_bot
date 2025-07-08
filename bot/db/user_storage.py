@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
