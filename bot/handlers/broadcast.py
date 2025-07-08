@@ -1,7 +1,7 @@
 from aiogram import Bot, Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from config_reader import env_config
+from bot.config_reader import env_config
 from aiogram.types import Message
 from bot.db import user_storage
 

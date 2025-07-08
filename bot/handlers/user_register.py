@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message
-from db import user_storage
+from bot.db import user_storage
 from bot.user_dto import UserDTO
 
 router = Router()

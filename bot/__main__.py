@@ -15,11 +15,12 @@ from bot.handlers import (
 import sys
 from bot.config_reader import env_config
 from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 
 tg_token = env_config.telegram_token.get_secret_value()
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
-bot = Bot(token=tg_token, parse_mode=ParseMode.HTML)
+bot = Bot(token=tg_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 dp = Dispatcher()
 dp.include_routers(
