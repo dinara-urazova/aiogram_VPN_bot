@@ -26,7 +26,7 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
     broadcast_text = message.text
     if not broadcast_text:
         await message.answer("❗ Пожалуйста, введите текст для рассылки.")
-        return 
+        return
 
     users = await user_storage.get_all_users()
 
@@ -39,5 +39,6 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
         except Exception as e:
             print(f"Ошибка при отправке пользователю {user.telegram_id}: {e}")
     await state.clear()
-    await message.answer(f"Рассылка отправлена! Сообщений отправлено: {sent_msg_count}.")
-
+    await message.answer(
+        f"Рассылка отправлена! Сообщений отправлено: {sent_msg_count}."
+    )
