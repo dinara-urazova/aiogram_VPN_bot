@@ -1,21 +1,14 @@
 import asyncio
-from aiogram import Bot, Dispatcher
 import logging
-from bot.handlers import (
-    cmd_start,
-    connect_button,
-    status_button,
-    buy_button,
-    help_button,
-    go_back_handler,
-    subscription_handler,
-    broadcast,
-    register_user,
-)
 import sys
-from bot.config_reader import env_config
-from aiogram.enums import ParseMode
+
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+
+from bot.config_reader import env_config
+from bot.handlers import (broadcast, buy_button, cmd_start, connect_button, go_back_handler, help_button, status_button,
+                          subscription_handler)
 
 tg_token = env_config.telegram_token.get_secret_value()
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
@@ -32,7 +25,6 @@ dp.include_routers(
     go_back_handler.router,
     subscription_handler.router,
     broadcast.router,
-    register_user.router,
 )
 
 

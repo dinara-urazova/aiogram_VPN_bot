@@ -1,15 +1,10 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-
     telegram_token: SecretStr
-    postgresql_database: str
-    postgresql_username: str
-    postgresql_password: SecretStr
-    postgresql_hostname: str
-    postgresql_port: str
+    postgresql_url: SecretStr
     owner_chat_id: SecretStr
 
     model_config = SettingsConfigDict(env_file=".env")
