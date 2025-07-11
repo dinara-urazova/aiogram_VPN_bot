@@ -7,7 +7,7 @@ router = Router()
 
 
 @router.message()
-async def register_or_update_user(message: Message):
+async def register_or_update_user(message: Message) -> None:
     user = message.from_user
     if user is None:  # анонимный или группа (не пользователь)
         return
@@ -22,3 +22,5 @@ async def register_or_update_user(message: Message):
     await user_storage.add_or_update_user(user_dto)
 
     print(f"User {user.id} is registered/updated in the db")
+
+    message.conf["propagate"] = True  # дб обработка дальше
