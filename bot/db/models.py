@@ -1,4 +1,4 @@
-from sqlalchemy import String, BigInteger, DateTime, func
+from sqlalchemy import BigInteger, func
 from sqlalchemy.orm import Mapped, mapped_column
 from bot.db.base import Base
 from datetime import datetime
