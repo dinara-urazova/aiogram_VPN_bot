@@ -10,7 +10,7 @@ from bot.user_dto import UserDTO
 
 
 def async_engine():
-    return create_async_engine(env_config.postgresql_url.get_secret_value(), echo=False)
+    return create_async_engine(env_config.postgresql_url.get_secret_value(), echo=True)
 
 
 async def get_all_users() -> Sequence[User]:
@@ -19,17 +19,17 @@ async def get_all_users() -> Sequence[User]:
         return result.scalars().all()
 
 
-async def find_user_by_telegram_id(
-    session: AsyncSession, telegram_id: int
-) -> User | None:
-    statement = select(User).where(User.telegram_id == telegram_id)
-    result = await session.execute(statement)
-    return result.scalar_one_or_none()
-
-
 async def add_or_update_user(user_dto: UserDTO) -> None:
+
+    async def _find_user_by_telegram_id(
+        session: AsyncSession, telegram_id: int
+    ) -> User | None:
+        statement = select(User).where(User.telegram_id == telegram_id)
+        result = await session.execute(statement)
+        return result.scalar_one_or_none()
+
     async with AsyncSession(autoflush=False, bind=async_engine()) as async_session:
-        user = await find_user_by_telegram_id(async_session, user_dto.telegram_id)
+        user = await _find_user_by_telegram_id(async_session, user_dto.telegram_id)
         if user is None:  # id пользователя нет в бд
             user = User(
                 telegram_id=user_dto.telegram_id,
