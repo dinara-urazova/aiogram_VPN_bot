@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -13,7 +13,7 @@ def async_engine():
     return create_async_engine(env_config.postgresql_url.get_secret_value(), echo=True)
 
 
-async def get_all_users() -> Sequence[User]:
+async def get_all_users() -> List[User]:
     async with AsyncSession(autoflush=False, bind=async_engine()) as async_session:
         result = await async_session.execute(select(User))
         return result.scalars().all()
@@ -44,7 +44,6 @@ async def add_or_update_user(user_dto: UserDTO) -> None:
             user.username = user_dto.username
 
         await async_session.commit()
-        await async_session.refresh(user)
 
 
 async def create_schema() -> None:

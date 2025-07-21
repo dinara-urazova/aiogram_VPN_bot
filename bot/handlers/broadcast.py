@@ -30,15 +30,24 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
 
     users = await user_storage.get_all_users()
 
+    total_users = len(users)
     sent_msg_count = 0
+    broadcast_log = []
     for user in users:
+        custom_text = f"Здравствуйте, {user.first_name}!\n\n{broadcast_text}"
         try:
-            custom_text = f"Здравствуйте, {user.first_name}!\n\n{broadcast_text}"
-            sent_msg_count += 1
             await bot.send_message(chat_id=user.telegram_id, text=custom_text)
+            sent_msg_count += 1
         except Exception as e:
-            print(f"Ошибка при отправке пользователю {user.telegram_id}: {e}")
+            broadcast_log.append(
+                f"Ошибка при отправке пользователю {user.telegram_id}: {e}"
+            )
     await state.clear()
     await message.answer(
-        f"Рассылка отправлена! Сообщений отправлено: {sent_msg_count}."
+        f"Рассылка отправлена! Сообщений отправлено: {sent_msg_count} из {total_users}."
     )
+    if broadcast_log:
+        text = "<b>Список ошибок:</b>\n"
+        for error in broadcast_log:
+            text += f"- {error}\n"
+        await message.answer(text)

@@ -6,8 +6,5 @@ router = Router()
 
 @router.callback_query(F.data == "go_back")
 async def go_back_handler(callback: CallbackQuery):
-    try:
-        await callback.message.delete()
-        await callback.answer()
-    except Exception:
-        pass
+    await callback.answer()
+    await callback.message.delete()

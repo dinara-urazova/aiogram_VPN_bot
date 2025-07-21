@@ -7,6 +7,7 @@ router = Router()
 
 @router.callback_query(F.data.in_({"one_month", "three_months", "six_months"}))
 async def subscription_handler(callback: CallbackQuery):
+    await callback.answer()
     data = callback.data
     if data == "one_month":
         text = "👌 Доступ: 1 месяц"
