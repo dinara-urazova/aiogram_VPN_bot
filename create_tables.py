@@ -15,7 +15,7 @@ async def drop_schema() -> None:
 
 
 async def main() -> None:
-    await drop_schema()
+    # await drop_schema()
     await create_schema()
 
 
