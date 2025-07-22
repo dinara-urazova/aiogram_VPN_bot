@@ -48,6 +48,6 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
     )
     if broadcast_log:
         text = "<b>Список ошибок:</b>\n"
-        for error in broadcast_log:
-            text += f"- {error}\n"
+        for index, error in enumerate(broadcast_log, start=1):
+            text += f"{index}. {error}\n"
         await message.answer(text)
