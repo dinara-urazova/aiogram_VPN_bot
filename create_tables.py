@@ -1,7 +1,7 @@
 import asyncio
 from bot.db.db_engine import engine
 from bot.db.base import Base
-
+from bot.db.models import User, TelegramEvent
 
 async def create_schema() -> None:
     async with engine.begin() as conn:
