@@ -1,8 +1,9 @@
-aiogram==3.13.0
-pytest==8.3.3
-pydantic-settings==2.6.1
-ruff==0.8.2
+SQLAlchemy
+aiogram
+asyncpg
 black
-SQLAlchemy==2.0.36
-
-
+greenlet
+pydantic
+pydantic-settings
+pytest
+ruff
