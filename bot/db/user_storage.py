@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ from bot.db.models import User
 from bot.user_dto import UserDTO
 
 
-async def get_all_users() -> List[User]:
+async def get_all_users() -> Sequence[User]:
     async with async_session_factory() as session:
         result = await session.execute(select(User))
         return result.scalars().all()
@@ -17,7 +17,7 @@ async def add_or_update_user(user_dto: UserDTO) -> None:
 
     async def _find_user_by_telegram_id(
         session: AsyncSession, telegram_id: int
-    ) -> Optional[User]:
+    ) -> User | None:
         statement = select(User).where(User.telegram_id == telegram_id)
         result = await session.execute(statement)
         return result.scalar_one_or_none()

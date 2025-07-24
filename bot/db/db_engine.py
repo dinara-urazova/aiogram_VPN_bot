@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from bot.config_reader import env_config
 
 engine = create_async_engine(
@@ -8,8 +8,7 @@ engine = create_async_engine(
 )
 
 
-async_session_factory = sessionmaker(
+async_session_factory = async_sessionmaker(
     engine,
     expire_on_commit=False,
-    class_=AsyncSession,
 )

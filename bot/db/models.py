@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, func, ForeignKey
+from sqlalchemy import BigInteger, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import JSON
 from bot.db.base import Base
@@ -22,8 +22,6 @@ class TelegramEvent(Base):
     __tablename__ = "telegram_events"
 
     event_id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("users.telegram_id")
-    )
+    telegram_id: Mapped[int] = mapped_column(BigInteger)
     payload: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
