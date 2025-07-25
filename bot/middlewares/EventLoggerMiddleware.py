@@ -3,11 +3,10 @@ from typing import Any, Awaitable, Callable, cast, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
 
-from bot.db.database import add_or_update_user
-from bot.user_dto import UserDTO
+from bot.db import database
 
 
-class UpdateUserMiddleware(BaseMiddleware):
+class EventLoggerMiddleware(BaseMiddleware):
     async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
@@ -15,14 +14,6 @@ class UpdateUserMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         user = cast(User, data["event_from_user"])
-
-        user_dto = UserDTO(
-            telegram_id=user.id,
-            first_name=user.first_name or "Пользователь",
-            last_name=user.last_name,
-            username=user.username,
-        )
-
-        await add_or_update_user(user_dto)
-
+        payload = event.model_dump(exclude_none=True)
+        await database.create_telegram_event(user.id, payload)
         return await handler(event, data)

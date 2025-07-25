@@ -1,5 +1,21 @@
 import asyncio
-from bot.db.user_storage import create_schema
+
+from bot.db.base import Base
+from bot.db.database import engine
+from bot.db.models import TelegramEvent, User  # noqa: F401
+
+
+# we need the line above to create tables in db
+
+
+async def create_schema() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def drop_schema() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 async def main() -> None:

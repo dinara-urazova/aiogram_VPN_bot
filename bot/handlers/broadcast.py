@@ -1,9 +1,10 @@
-from aiogram import Bot, Router, F
+from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from bot.config_reader import env_config
 from aiogram.types import Message
-from bot.db import user_storage
+
+from bot.config_reader import env_config
+from bot.db import database
 
 router = Router()
 
@@ -28,7 +29,7 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
         await message.answer("❗ Пожалуйста, введите текст для рассылки.")
         return
 
-    users = await user_storage.get_all_users()
+    users = await database.get_all_users()
 
     total_users = len(users)
     sent_msg_count = 0
