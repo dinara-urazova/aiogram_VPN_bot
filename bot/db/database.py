@@ -13,6 +13,7 @@ engine = create_async_engine(
     echo=True,
 )
 
+
 async def get_all_users() -> Sequence[User]:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         result = await async_session.execute(select(User))
