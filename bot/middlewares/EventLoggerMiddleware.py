@@ -2,6 +2,7 @@ from typing import Any, Awaitable, Callable, cast, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
+from aiogram.utils.serialization import deserialize_telegram_object_to_python
 
 from bot.db import database
 
@@ -14,6 +15,6 @@ class EventLoggerMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         user = cast(User, data["event_from_user"])
-        payload = event.model_dump(exclude_none=True)
+        payload = deserialize_telegram_object_to_python(event)
         await database.create_telegram_event(user.id, payload)
         return await handler(event, data)
