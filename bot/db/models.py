@@ -1,8 +1,10 @@
-from sqlalchemy import BigInteger, func
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import JSON
-from bot.db.base import Base
 from datetime import datetime
+
+from sqlalchemy import BigInteger, func
+from sqlalchemy import JSON
+from sqlalchemy.orm import Mapped, mapped_column
+
+from bot.db.base import Base
 
 
 class User(Base):

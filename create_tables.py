@@ -1,7 +1,9 @@
 import asyncio
-from bot.db.db_engine import engine
+
 from bot.db.base import Base
-from bot.db.models import User, TelegramEvent  # noqa: F401
+from bot.db.database import engine
+from bot.db.models import TelegramEvent, User  # noqa: F401
+
 
 # we need the line above to create tables in db
 

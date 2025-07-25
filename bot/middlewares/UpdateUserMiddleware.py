@@ -2,9 +2,9 @@ from typing import Any, Awaitable, Callable, cast, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
-from bot.user_dto import UserDTO
 
-from bot.db.user_storage import add_or_update_user
+from bot.db.database import add_or_update_user
+from bot.user_dto import UserDTO
 
 
 class UpdateUserMiddleware(BaseMiddleware):
