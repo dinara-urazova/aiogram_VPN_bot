@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, func
+from sqlalchemy import BigInteger, func, ForeignKey
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,6 +14,9 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None]
+    expires_at: Mapped[datetime | None] = mapped_column(
+        server_default=func.now(), comment="Дата истечения подписки"
+    )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()
@@ -26,4 +29,13 @@ class TelegramEvent(Base):
     event_id: Mapped[int] = mapped_column(primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger)
     payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    payment_id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.telegram_id"))
+    amount: Mapped[int | None]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
