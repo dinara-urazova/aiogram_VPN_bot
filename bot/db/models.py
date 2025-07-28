@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, func, ForeignKey
+from sqlalchemy import BigInteger, func, ForeignKey, Date
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -17,6 +17,7 @@ class User(Base):
     expires_at: Mapped[datetime | None] = mapped_column(
         server_default=func.now(), comment="Дата истечения подписки"
     )
+    birthday: Mapped[datetime | None] = mapped_column(Date, comment="Дата рождения")
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()
