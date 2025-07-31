@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import BigInteger, func, ForeignKey, Date
 from sqlalchemy import JSON
@@ -7,15 +7,20 @@ from sqlalchemy.orm import Mapped, mapped_column
 from bot.db.base import Base
 
 
+def get_trial_expiry_date() -> datetime:
+    return datetime.now() + timedelta(days=1)
+
+
 class User(Base):
     __tablename__ = "users"  # название таблицы в БД (смотри через DBeaver)
 
-    telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None]
     expires_at: Mapped[datetime | None] = mapped_column(
-        server_default=func.now(), comment="Дата истечения подписки"
+        default=get_trial_expiry_date,
+        comment="Дата истечения подписки (с учетом free trial на 1 день)",
     )
     birthday: Mapped[datetime | None] = mapped_column(Date, comment="Дата рождения")
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
@@ -37,6 +42,6 @@ class Payment(Base):
     __tablename__ = "payments"
 
     payment_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.telegram_id"))
-    amount: Mapped[int | None]
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    amount: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
