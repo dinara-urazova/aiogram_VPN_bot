@@ -23,7 +23,7 @@ async def get_all_users() -> Sequence[User]:
 async def add_or_update_user(user_dto: UserDTO) -> None:
 
     async def _find_user_by_telegram_id(telegram_id: int) -> User | None:
-        statement = select(User).where(User.id == telegram_id)
+        statement = select(User).where(User.telegram_id == telegram_id)
         result = await async_session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -31,7 +31,7 @@ async def add_or_update_user(user_dto: UserDTO) -> None:
         user = await _find_user_by_telegram_id(user_dto.telegram_id)
         if user is None:  # id пользователя нет в бд
             user = User(
-                id=user_dto.telegram_id,
+                telegram_id=user_dto.telegram_id,
                 first_name=user_dto.first_name,
                 last_name=user_dto.last_name,
                 username=user_dto.username,
@@ -45,10 +45,10 @@ async def add_or_update_user(user_dto: UserDTO) -> None:
         await async_session.commit()
 
 
-async def create_telegram_event(id: int, payload: dict) -> None:
+async def create_telegram_event(telegram_id: int, payload: dict) -> None:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         new_event = TelegramEvent(
-            telegram_id=id,
+            telegram_id=telegram_id,
             payload=payload,
         )
         async_session.add(new_event)

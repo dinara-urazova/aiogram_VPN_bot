@@ -14,7 +14,8 @@ def get_trial_expiry_date() -> datetime:
 class User(Base):
     __tablename__ = "users"  # название таблицы в БД (смотри через DBeaver)
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None]
@@ -32,7 +33,7 @@ class User(Base):
 class TelegramEvent(Base):
     __tablename__ = "telegram_events"
 
-    event_id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger)
     payload: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
@@ -41,7 +42,7 @@ class TelegramEvent(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    payment_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     amount: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
