@@ -40,7 +40,9 @@ async def handle_broadcast_text(message: Message, state: FSMContext, bot: Bot):
             await bot.send_message(chat_id=user.telegram_id, text=custom_text)
             sent_msg_count += 1
         except Exception as e:
-            broadcast_log.append(f"Ошибка при отправке пользователю {user.telegram_id}: {e}")
+            broadcast_log.append(
+                f"Ошибка при отправке пользователю {user.telegram_id}: {e}"
+            )
     await state.clear()
     await message.answer(
         f"Рассылка отправлена! Сообщений отправлено: {sent_msg_count} из {total_users}."
