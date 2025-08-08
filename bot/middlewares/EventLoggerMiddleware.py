@@ -16,5 +16,5 @@ class EventLoggerMiddleware(BaseMiddleware):
     ) -> Any:
         user = cast(User, data["event_from_user"])
         payload = deserialize_telegram_object_to_python(event)
-        await database.create_telegram_event(user.id, payload)
+        await database.create_telegram_event(user.telegram_id, payload)
         return await handler(event, data)

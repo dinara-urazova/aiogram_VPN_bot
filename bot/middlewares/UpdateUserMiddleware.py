@@ -17,7 +17,7 @@ class UpdateUserMiddleware(BaseMiddleware):
         user = cast(User, data["event_from_user"])
 
         user_dto = UserDTO(
-            telegram_id=user.id,
+            telegram_id=user.telegram_id,
             first_name=user.first_name or "Пользователь",
             last_name=user.last_name,
             username=user.username,
