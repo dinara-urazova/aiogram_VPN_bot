@@ -1,8 +1,7 @@
+import logging
 from aiogram import Router, F
 from aiogram.types import Message
-from bot.keyboards import connection_kb
 import vpn_client
-import logging
 
 router = Router()
 
@@ -10,21 +9,15 @@ router = Router()
 @router.message(F.text == "⚡️ Подключиться")
 async def connect_button(message: Message):
     user_id = message.from_user.id
-    if vpn_client.xui.session_string:
-        # Уже залогинен, можно продолжать работу
-        logging.info("Already logged in, using existing session")
-        res = "✅ Уже авторизованы на панели."
-    else:
-        try:
-            res = await vpn_client.get_client_key(user_id)
-            logging.info(f"Login result: {res}")
-            if res == "🔥 Successful login":
-                res = "✅ Успешно авторизовались на панели."
-            else:
-                res = "❌ Не удалось авторизоваться."
-                
-            res = "✅ Успешно авторизовались на панели."
-        except Exception as e:
-            logging.error(f"Exception in connect_button: {e}")
-            res = "❌ Не удалось авторизоваться."
-    await message.answer(res)
+    try:
+        key = await vpn_client.get_client_key(user_id)
+        if key:
+            text = f"<pre>{key}</pre>"
+            await message.answer(
+                f"{text}\n 👆 Это ваш VPN ключ. Коснитесь, чтобы скопировать"
+            )
+        else:
+            await message.answer("❌ Не удалось получить VPN ключ.")
+    except Exception as e:
+        logging.error(f"Exception in connect_button: {e}")
+        await message.answer("❌ Произошла ошибка при подключении.")
