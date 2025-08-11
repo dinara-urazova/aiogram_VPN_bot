@@ -45,13 +45,17 @@ async def _xui_create_client(inbound_id: int, telegram_id: int) -> str:
 
 
 async def _xui_get_inbound(inbound_id: int) -> dict:
-    inbound_list = await xui.get_inbound(inbound_id=inbound_id)  # функция возвращает словарь
+    inbound_list = await xui.get_inbound(
+        inbound_id=inbound_id
+    )  # функция возвращает словарь
     if not inbound_list.get("success", False):
         raise RuntimeError("❌ Getting the inbound list failed")
     return inbound_list["obj"]
 
 
-async def _build_vless_key(inbound_list: dict, client_uuid: str, telegram_id: int) -> str:
+async def _build_vless_key(
+    inbound_list: dict, client_uuid: str, telegram_id: int
+) -> str:
     obj = inbound_list
     settings = json.loads(
         obj["settings"]
@@ -82,7 +86,7 @@ async def _build_vless_key(inbound_list: dict, client_uuid: str, telegram_id: in
     }
 
     query_str = urlencode(data)
-    ps_encoded = quote(f'🇷🇺 SklyarovVPN ({telegram_id})')
+    ps_encoded = quote(f"🇷🇺 SklyarovVPN ({telegram_id})")
     key_string = f"vless://{config['id']}@{config['add']}:{config['port']}?{query_str}#{ps_encoded}"
     return key_string
 
