@@ -14,7 +14,7 @@ async def register_or_update_user(message: Message) -> None:
         return
 
     user_dto = UserDTO(
-        telegram_id=user.id,
+        telegram_id=user.telegram_id,
         first_name=user.first_name or "Пользователь",
         last_name=user.last_name,
         username=user.username,
@@ -22,4 +22,4 @@ async def register_or_update_user(message: Message) -> None:
 
     await database.add_or_update_user(user_dto)
 
-    print(f"User {user.id} is registered/updated in the db")
+    print(f"User {user.telegram_id} is registered/updated in the db")
