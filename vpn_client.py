@@ -2,13 +2,7 @@ import json
 import uuid
 from urllib.parse import quote, urlencode
 
-from pyxui_async import XUI
-from pyxui_async.errors import NotFound
-
 from bot.config_reader import env_config
-
-xui = XUI(full_address=env_config.panel_url, panel="sanaei", session_string=None)
-
 
 async def _xui_login():
     if xui.session_string is not None:
