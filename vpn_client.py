@@ -1,96 +1,156 @@
 import json
 import uuid
 from urllib.parse import quote, urlencode
-
+import aiohttp
 from bot.config_reader import env_config
 
-async def _xui_login():
-    if xui.session_string is not None:
-        return
 
-    await xui.login(
-        env_config.panel_username.get_secret_value(),
-        env_config.panel_password.get_secret_value(),
-    )
+class VpnClient:
+    def __init__(self):
 
+        self.session = aiohttp.ClientSession(cookies=None)
+        self.session_cookie = None
 
-async def _xui_find_client(inbound_id: int, telegram_id: int) -> str | None:
-    try:
-        client = await xui.get_client(inbound_id, email=str(telegram_id))
-        return client["id"]
-    except NotFound:
-        return None
+    async def login(self) -> dict:
+        try:
+            response = await self.session.post(
+                url=f"{env_config.panel_url}/login",
+                data={
+                    "username": env_config.panel_username.get_secret_value(),
+                    "password": env_config.panel_password.get_secret_value(),
+                },
+                ssl=True,
+                timeout=30,
+            )
+            data = await self.verify_response(response)
 
+            if data.get("success", False):
+                self.session_cookie = response.cookies.get("3x-ui")
+                return data
 
-async def _xui_create_client(inbound_id: int, telegram_id: int) -> str:
-    client_uuid = str(uuid.uuid4())
-    add_client_response = await xui.add_client(
-        inbound_id=inbound_id,
-        email=str(telegram_id),
-        uuid=client_uuid,
-        enable=True,
-        flow="xtls-rprx-vision",
-    )
+        except Exception as e:
+            raise RuntimeError(f"Failed login: error {e}")
 
-    if not add_client_response.get("success", False):  # дб "success": True
-        raise RuntimeError("❌ Adding client failed")
+    async def verify_response(self, response):
+        content_type = response.headers.get("Content-Type", "")
+        if response.status != 404 and content_type.startswith("application/json"):
+            response = await response.json()
+            return response
+        else:
+            raise RuntimeError("Failed to verify a response")
 
-    return client_uuid
+    async def get_inbounds(self) -> dict:
+        response = await self.session.get(
+            f"{env_config.panel_url}/panel/api/inbounds/list",
+            ssl=True,
+            timeout=30,
+        )
+        data = await self.verify_response(response)
+        if not data.get("success", False):
+            raise RuntimeError("❌ Getting the inbound list failed")
+        return data
 
+    async def get_inbound(self, inbound_id: int) -> dict:
+        response = await self.session.get(
+            f"{env_config.panel_url}/panel/api/inbounds/get/{inbound_id}",
+            ssl=True,
+            timeout=30,
+        )
+        data = await self.verify_response(response)
+        if not data.get("success", False):
+            raise RuntimeError("❌ Getting the inbound failed")
+        return data["obj"]
 
-async def _xui_get_inbound(inbound_id: int) -> dict:
-    inbound_list = await xui.get_inbound(
-        inbound_id=inbound_id
-    )  # функция возвращает словарь
-    if not inbound_list.get("success", False):
-        raise RuntimeError("❌ Getting the inbound list failed")
-    return inbound_list["obj"]
+    async def find_client(self, inbound_id: int, telegram_id: int) -> str | None:
+        try:
+            inbounds_data = await self.get_inbounds()
+            for inbound in inbounds_data["obj"]:
+                if inbound["id"] == inbound_id:
+                    settings = json.loads(inbound["settings"])
+                    for client in settings["clients"]:
+                        if client["email"] == telegram_id:
+                            return client["id"]
+                    return None
+            return None
 
+        except Exception as e:
+            raise RuntimeError(f"Failed find_client: error {e}")
 
-async def _build_vless_key(
-    inbound_list: dict, client_uuid: str, telegram_id: int
-) -> str:
-    obj = inbound_list
-    settings = json.loads(
-        obj["settings"]
-    )  # получаем доступ к settings по ключу и парсим их в словарь, так как settings - строка json
-    stream_settings = json.loads(obj["streamSettings"])
-    clients = settings["clients"]
-    client = next(
-        (c for c in clients if c["id"] == client_uuid), None
-    )  # next здесь выбирает 1 встретившийся экз
-    if client is None:
-        raise RuntimeError("Клиент не найден в списке inbound")
+    async def create_client(self, inbound_id: int, telegram_id: int) -> str:
+        client_uuid = str(uuid.uuid4())
+        settings = {
+            "clients": [
+                {
+                    "id": client_uuid,
+                    "email": telegram_id,
+                    "enable": True,
+                    "flow": "xtls-rprx-vision",
+                }
+            ],
+            "decryption": "none",
+            "fallbacks": [],
+        }
 
-    config = {
-        "id": client["id"],
-        "add": "3x-rus.olegsklyarov.ru",
-        "port": obj["port"],
-    }
+        params = {"id": inbound_id, "settings": json.dumps(settings)}
 
-    data = {
-        "type": stream_settings["network"],
-        "security": stream_settings["security"],
-        "pbk": stream_settings["realitySettings"]["settings"]["publicKey"],
-        "fp": stream_settings["realitySettings"]["settings"]["fingerprint"],
-        "sni": stream_settings["realitySettings"]["serverNames"][0],
-        "sid": stream_settings["realitySettings"]["shortIds"][0],
-        "spx": stream_settings["realitySettings"]["settings"]["spiderX"],
-        "flow": client["flow"],
-    }
+        await self.session.post(
+            url=f"{env_config.panel_url}/panel/api/inbounds/addClient",
+            data=params,
+            ssl=True,
+            timeout=30,
+        )
+        return client_uuid
 
-    query_str = urlencode(data)
-    ps_encoded = quote(f"🇷🇺 SklyarovVPN ({telegram_id})")
-    key_string = f"vless://{config['id']}@{config['add']}:{config['port']}?{query_str}#{ps_encoded}"
-    return key_string
+    async def build_vless_key(
+        self, inbound_list: dict, client_uuid: str, telegram_id: int
+    ) -> str:
+        obj = inbound_list
+        settings = json.loads(
+            obj["settings"]
+        )  # settings is a json string and loads() to turn it into dict
+        stream_settings = json.loads(obj["streamSettings"])
+        clients = settings["clients"]
+        client = next(
+            (c for c in clients if c["id"] == client_uuid), None
+        )  # next здесь выбирает 1 встретившийся экз
+        if client is None:
+            raise RuntimeError("Клиент не найден в списке inbound")
+
+        config = {
+            "id": client["id"],
+            "add": "3x-rus.olegsklyarov.ru",
+            "port": obj["port"],
+        }
+
+        data = {
+            "type": stream_settings["network"],
+            "security": stream_settings["security"],
+            "pbk": stream_settings["realitySettings"]["settings"]["publicKey"],
+            "fp": stream_settings["realitySettings"]["settings"]["fingerprint"],
+            "sni": stream_settings["realitySettings"]["serverNames"][0],
+            "sid": stream_settings["realitySettings"]["shortIds"][0],
+            "spx": stream_settings["realitySettings"]["settings"]["spiderX"],
+            "flow": client["flow"],
+        }
+
+        query_str = urlencode(data)
+        ps_encoded = quote(f"🇷🇺 SklyarovVPN ({telegram_id})")
+        key_string = f"vless://{config['id']}@{config['add']}:{config['port']}?{query_str}#{ps_encoded}"
+        return key_string
 
 
 async def get_client_key(telegram_id: int):
+    vpn = VpnClient()
     inbound_id = 1
-    await _xui_login()
-    client_uuid = await _xui_find_client(inbound_id, telegram_id)
-    if client_uuid is None:
-        client_uuid = await _xui_create_client(inbound_id, telegram_id)
-    inbound_dict = await _xui_get_inbound(inbound_id)
-    key_string = await _build_vless_key(inbound_dict, client_uuid, telegram_id)
+    try:
+        await vpn.login()
+        client_uuid = await vpn.find_client(inbound_id, telegram_id)
+        if client_uuid is None:
+            client_uuid = await vpn.create_client(inbound_id, telegram_id)
+        inbound_dict = await vpn.get_inbound(inbound_id)
+        key_string = await vpn.build_vless_key(inbound_dict, client_uuid, telegram_id)
+    except Exception as e:
+        return f"Error getting the client key = {e}"
+    finally:
+        await vpn.session.close()
     return key_string
