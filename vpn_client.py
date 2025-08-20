@@ -53,8 +53,8 @@ async def _get_inbound(session_cookie: str, inbound_id: int, telegram_id: int) -
             inbound_data = json_response["obj"]
             settings = json.loads(inbound_data["settings"])
             client = next(
-                (c for c in settings["clients"] if c["email"] == str(telegram_id)), None
-            )
+                (client for client in settings["clients"] if client["email"] == str(telegram_id)), None
+            ) # поиск до первого совпадения, None по умолчанию - если не найдет
             return client, inbound_data
 
 
