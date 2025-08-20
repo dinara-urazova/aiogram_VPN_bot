@@ -38,24 +38,31 @@ async def _verify_and_get_json(response: ClientResponse) -> dict:
 
 async def _get_inbound(session_cookie: str, inbound_id: int) -> dict:
     async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
-        async with session.get(f"{env_config.panel_url}/panel/api/inbounds/get/{inbound_id}", ssl=True,
-                               timeout=30) as response:
+        async with session.get(
+            f"{env_config.panel_url}/panel/api/inbounds/get/{inbound_id}",
+            ssl=True,
+            timeout=30,
+        ) as response:
             json_response = await _verify_and_get_json(response)
             if "obj" not in json_response:
                 raise RuntimeError("Bad response: obj key not present in response")
             return json_response["obj"]
 
 
-async def _find_client(session_cookie: str, inbound_id: int, telegram_id: int) -> dict | None:
+async def _find_client(
+    session_cookie: str, inbound_id: int, telegram_id: int
+) -> dict | None:
     inbound_data = await _get_inbound(session_cookie, inbound_id)
     settings = json.loads(inbound_data["settings"])
     for client in settings["clients"]:
-        if client["email"] == telegram_id:  # возможно сравнение строки с int❗️
+        if client["email"] == str(telegram_id):
             return client
     return None
 
 
-async def _create_and_get_client(session_cookie: str, inbound_id: int, telegram_id: int) -> dict:
+async def _create_and_get_client(
+    session_cookie: str, inbound_id: int, telegram_id: int
+) -> dict:
     client_uuid = str(uuid.uuid4())
     settings = {
         "clients": [
@@ -74,10 +81,10 @@ async def _create_and_get_client(session_cookie: str, inbound_id: int, telegram_
 
     async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
         async with session.post(
-                url=f"{env_config.panel_url}/panel/api/inbounds/addClient",
-                data=params,
-                ssl=True,
-                timeout=30,
+            url=f"{env_config.panel_url}/panel/api/inbounds/addClient",
+            data=params,
+            ssl=True,
+            timeout=30,
         ) as response:
             if response.status != 200:
                 raise RuntimeError("Failed to add client")
