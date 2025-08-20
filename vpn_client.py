@@ -16,8 +16,12 @@ async def _login() -> str:
             "password": env_config.panel_password.get_secret_value(),
         }
         async with session.post(url=url, data=data, ssl=True, timeout=30) as response:
-            await _verify_and_get_json(response)
-            return response.cookies.get("3x-ui")
+            if response.status != 200:
+                raise RuntimeError(f"Login failed: bad status {response.status}")
+            cookie = response.cookies.get("3x-ui")
+            if not cookie:
+                raise RuntimeError("Login failed: cookie not set")
+            return cookie.value
 
 
 async def _verify_and_get_json(response: ClientResponse) -> dict:
@@ -36,7 +40,7 @@ async def _verify_and_get_json(response: ClientResponse) -> dict:
     return json_response
 
 
-async def _get_inbound(session_cookie: str, inbound_id: int) -> dict:
+async def _get_inbound(session_cookie: str, inbound_id: int, telegram_id: int) -> dict:
     async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
         async with session.get(
             f"{env_config.panel_url}/panel/api/inbounds/get/{inbound_id}",
@@ -46,18 +50,12 @@ async def _get_inbound(session_cookie: str, inbound_id: int) -> dict:
             json_response = await _verify_and_get_json(response)
             if "obj" not in json_response:
                 raise RuntimeError("Bad response: obj key not present in response")
-            return json_response["obj"]
-
-
-async def _find_client(
-    session_cookie: str, inbound_id: int, telegram_id: int
-) -> dict | None:
-    inbound_data = await _get_inbound(session_cookie, inbound_id)
-    settings = json.loads(inbound_data["settings"])
-    for client in settings["clients"]:
-        if client["email"] == str(telegram_id):
-            return client
-    return None
+            inbound_data = json_response["obj"]
+            settings = json.loads(inbound_data["settings"])
+            client = next(
+                (c for c in settings["clients"] if c["email"] == str(telegram_id)), None
+            )
+            return client, inbound_data
 
 
 async def _create_and_get_client(
@@ -89,16 +87,15 @@ async def _create_and_get_client(
             if response.status != 200:
                 raise RuntimeError("Failed to add client")
 
-    return await _find_client(session_cookie, inbound_id, telegram_id)
+    return await _get_inbound(session_cookie, inbound_id, telegram_id)
 
 
-async def _build_vless_key(inbound_list: dict, client: dict, telegram_id: int) -> str:
-    obj = inbound_list
-    stream_settings = json.loads(obj["streamSettings"])
+async def _build_vless_key(inbound_dict: dict, client: dict, telegram_id: int) -> str:
+    stream_settings = json.loads(inbound_dict["streamSettings"])
     config = {
         "id": client["id"],
         "add": "3x-rus.olegsklyarov.ru",
-        "port": obj["port"],
+        "port": inbound_dict["port"],
     }
 
     data = {
@@ -118,12 +115,13 @@ async def _build_vless_key(inbound_list: dict, client: dict, telegram_id: int) -
     return key_string
 
 
-async def get_client_key(telegram_id: int):
+async def get_client_key(telegram_id: int) -> str:
     inbound_id = 1
     session_cookie = await _login()
-    client = await _find_client(session_cookie, inbound_id, telegram_id)
+    client, inbound_dict = await _get_inbound(session_cookie, inbound_id, telegram_id)
     if client is None:
-        client = await _create_and_get_client(session_cookie, inbound_id, telegram_id)
+        client, inbound_dict = await _create_and_get_client(
+            session_cookie, inbound_id, telegram_id
+        )
         assert client is not None
-    inbound_dict = await _get_inbound(session_cookie, inbound_id)
     return await _build_vless_key(inbound_dict, client, telegram_id)
