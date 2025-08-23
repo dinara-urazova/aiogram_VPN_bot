@@ -2,76 +2,107 @@ import json
 import uuid
 from urllib.parse import quote, urlencode
 
-from pyxui_async import XUI
-from pyxui_async.errors import NotFound
+import aiohttp
+from aiohttp import ClientResponse
 
 from bot.config_reader import env_config
 
-xui = XUI(full_address=env_config.panel_url, panel="sanaei", session_string=None)
+
+async def _login() -> str:
+    async with aiohttp.ClientSession() as session:
+        url = f"{env_config.panel_url}/login"
+        data = {
+            "username": env_config.panel_username.get_secret_value(),
+            "password": env_config.panel_password.get_secret_value(),
+        }
+        async with session.post(url=url, data=data, ssl=True, timeout=30) as response:
+            if response.status != 200:
+                raise RuntimeError(f"Login failed: bad status {response.status}")
+            cookie = response.cookies.get("3x-ui")
+            if not cookie:
+                raise RuntimeError("Login failed: cookie not set")
+            return cookie.value
 
 
-async def _xui_login():
-    if xui.session_string is not None:
-        return
+async def _verify_and_get_json(response: ClientResponse) -> dict:
+    content_type = response.headers.get("Content-Type", "")
+    if response.status > 299 or not content_type.startswith("application/json"):
+        raise RuntimeError("Bad Response: Failed to verify a response")
 
-    await xui.login(
-        env_config.panel_username.get_secret_value(),
-        env_config.panel_password.get_secret_value(),
-    )
+    json_response = await response.json()
 
+    if "success" not in json_response:
+        raise RuntimeError("Bad response: success key not present in response")
 
-async def _xui_find_client(inbound_id: int, telegram_id: int) -> str | None:
-    try:
-        client = await xui.get_client(inbound_id, email=str(telegram_id))
-        return client["id"]
-    except NotFound:
-        return None
+    if json_response["success"] is False:
+        raise RuntimeError("Bad response: success is False")
+
+    return json_response
 
 
-async def _xui_create_client(inbound_id: int, telegram_id: int) -> str:
-    client_uuid = str(uuid.uuid4())
-    add_client_response = await xui.add_client(
-        inbound_id=inbound_id,
-        email=str(telegram_id),
-        uuid=client_uuid,
-        enable=True,
-        flow="xtls-rprx-vision",
-    )
-
-    if not add_client_response.get("success", False):  # дб "success": True
-        raise RuntimeError("❌ Adding client failed")
-
-    return client_uuid
+async def _get_inbound(session_cookie: str, inbound_id: int) -> dict:
+    async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
+        async with session.get(
+            f"{env_config.panel_url}/panel/api/inbounds/get/{inbound_id}",
+            ssl=True,
+            timeout=30,
+        ) as response:
+            json_response = await _verify_and_get_json(response)
+            if "obj" not in json_response:
+                raise RuntimeError("Bad response: obj key not present in response")
+            inbound = json_response["obj"]
+            return inbound
 
 
-async def _xui_get_inbound(inbound_id: int) -> dict:
-    inbound_list = await xui.get_inbound(
-        inbound_id=inbound_id
-    )  # функция возвращает словарь
-    if not inbound_list.get("success", False):
-        raise RuntimeError("❌ Getting the inbound list failed")
-    return inbound_list["obj"]
-
-
-async def _build_vless_key(
-    inbound_list: dict, client_uuid: str, telegram_id: int
-) -> str:
-    obj = inbound_list
-    settings = json.loads(
-        obj["settings"]
-    )  # получаем доступ к settings по ключу и парсим их в словарь, так как settings - строка json
-    stream_settings = json.loads(obj["streamSettings"])
-    clients = settings["clients"]
+def _find_client_in_inbound(inbound: dict, telegram_id: int) -> dict | None:
+    settings = json.loads(inbound["settings"])
     client = next(
-        (c for c in clients if c["id"] == client_uuid), None
-    )  # next здесь выбирает 1 встретившийся экз
-    if client is None:
-        raise RuntimeError("Клиент не найден в списке inbound")
+        (
+            client
+            for client in settings["clients"]
+            if client["email"] == str(telegram_id)
+        ),
+        None,
+    )  # поиск до первого совпадения, None по умолчанию - если не найдет
+    return client
 
+
+async def _create_client(
+    session_cookie: str, inbound_id: int, telegram_id: int
+) -> dict:
+    new_client_uuid = str(uuid.uuid4())
+    settings = {
+        "clients": [
+            {
+                "id": new_client_uuid,
+                "email": str(telegram_id),
+                "enable": True,
+                "flow": "xtls-rprx-vision",
+            }
+        ],
+        "decryption": "none",
+        "fallbacks": [],
+    }
+
+    params = {"id": inbound_id, "settings": json.dumps(settings)}
+
+    async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
+        async with session.post(
+            url=f"{env_config.panel_url}/panel/api/inbounds/addClient",
+            data=params,
+            ssl=True,
+            timeout=30,
+        ) as response:
+            if response.status != 200:
+                raise RuntimeError("Failed to add client")
+
+
+async def _build_vless_key(inbound: dict, client: dict, telegram_id: int) -> str:
+    stream_settings = json.loads(inbound["streamSettings"])
     config = {
         "id": client["id"],
         "add": "3x-rus.olegsklyarov.ru",
-        "port": obj["port"],
+        "port": inbound["port"],
     }
 
     data = {
@@ -91,12 +122,15 @@ async def _build_vless_key(
     return key_string
 
 
-async def get_client_key(telegram_id: int):
-    inbound_id = 1
-    await _xui_login()
-    client_uuid = await _xui_find_client(inbound_id, telegram_id)
-    if client_uuid is None:
-        client_uuid = await _xui_create_client(inbound_id, telegram_id)
-    inbound_dict = await _xui_get_inbound(inbound_id)
-    key_string = await _build_vless_key(inbound_dict, client_uuid, telegram_id)
-    return key_string
+async def get_client_key(telegram_id: int) -> str:
+    inbound_id = env_config.inbound_id
+    session_cookie = await _login()
+    inbound = await _get_inbound(session_cookie, inbound_id)
+    client = _find_client_in_inbound(inbound, telegram_id)
+    if client is None:
+        await _create_client(session_cookie, inbound_id, telegram_id)
+        inbound = await _get_inbound(session_cookie, inbound_id)
+        client = _find_client_in_inbound(inbound, telegram_id)
+        if client is None:
+            raise RuntimeError(f"Failed to create or find client {telegram_id}")
+    return await _build_vless_key(inbound, client, telegram_id)

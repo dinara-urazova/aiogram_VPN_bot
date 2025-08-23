@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     panel_url: str
     panel_username: SecretStr
     panel_password: SecretStr
+    inbound_id: int
 
     model_config = SettingsConfigDict(env_file=".env")
 
