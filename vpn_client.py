@@ -40,7 +40,8 @@ async def _verify_and_get_json(response: ClientResponse) -> dict:
     return json_response
 
 
-async def _get_inbound(session_cookie: str, inbound_id: int) -> dict:
+async def _get_inbound(session_cookie: str) -> dict:
+    inbound_id = env_config.inbound_id
     async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
         async with session.get(
             f"{env_config.panel_url}/panel/api/inbounds/get/{inbound_id}",
@@ -70,6 +71,7 @@ def _find_client_in_inbound(inbound: dict, telegram_id: int) -> dict | None:
 async def _create_client(
     session_cookie: str, inbound_id: int, telegram_id: int
 ) -> dict:
+    inbound_id = env_config.inbound_id
     new_client_uuid = str(uuid.uuid4())
     settings = {
         "clients": [
@@ -95,6 +97,37 @@ async def _create_client(
         ) as response:
             if response.status != 200:
                 raise RuntimeError("Failed to add client")
+
+
+async def _update_client(
+    session_cookie: str, telegram_id: int, client: dict, new_properties: dict
+):
+    inbound_id = env_config.inbound_id
+    client_uuid = client["id"]
+    client_data = {
+        "id": client_uuid,  # обяз параметры
+        "email": str(telegram_id),
+        **new_properties,  # распаковка словаря (изменяемые параметры)
+    }
+    settings = {
+        "clients": [client_data],
+        "decryption": "none",
+        "fallbacks": [],
+    }
+
+    params = {"id": inbound_id, "settings": json.dumps(settings)}
+
+    async with aiohttp.ClientSession(cookies={"3x-ui": session_cookie}) as session:
+        async with session.post(
+            url=f"{env_config.panel_url}/panel/api/inbounds/updateClient/{client_uuid}",
+            data=params,
+            ssl=True,
+            timeout=30,
+        ) as response:
+            if response.status != 200:
+                raise RuntimeError(
+                    f"Failed to update the client with telegram_id = {telegram_id} with the following changes {new_properties}"
+                )
 
 
 async def _build_vless_key(inbound: dict, client: dict, telegram_id: int) -> str:
@@ -123,14 +156,23 @@ async def _build_vless_key(inbound: dict, client: dict, telegram_id: int) -> str
 
 
 async def get_client_key(telegram_id: int) -> str:
-    inbound_id = env_config.inbound_id
     session_cookie = await _login()
-    inbound = await _get_inbound(session_cookie, inbound_id)
+    inbound = await _get_inbound(session_cookie)
     client = _find_client_in_inbound(inbound, telegram_id)
     if client is None:
-        await _create_client(session_cookie, inbound_id, telegram_id)
-        inbound = await _get_inbound(session_cookie, inbound_id)
+        await _create_client(session_cookie, telegram_id)
+        inbound = await _get_inbound(session_cookie)
         client = _find_client_in_inbound(inbound, telegram_id)
         if client is None:
             raise RuntimeError(f"Failed to create or find client {telegram_id}")
     return await _build_vless_key(inbound, client, telegram_id)
+
+
+async def set_client_traffic(telegram_id: int, enable: bool):
+    session_cookie = await _login()
+    inbound = await _get_inbound(session_cookie)
+    client = _find_client_in_inbound(inbound, telegram_id)
+    if client is None:
+        raise RuntimeError(f"No client found with telegam_id =  {telegram_id}")
+    changes = {"enable": enable}
+    return await _update_client(session_cookie, telegram_id, client, changes)
