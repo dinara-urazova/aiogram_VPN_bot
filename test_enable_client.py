@@ -1,7 +1,5 @@
 import asyncio
 
-from bot.db.base import Base
-from bot.db.database import engine
 from bot.db.models import TelegramEvent, User, Payment  # noqa: F401
 from vpn_client import set_client_traffic
 
