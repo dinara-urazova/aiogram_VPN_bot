@@ -15,10 +15,10 @@ async def status_button(message: Message):
     if not user:
         await message.answer("Пользователь не найден.", reply_markup=go_back_kb())
         return
-    
+
     status = "✅ Активна" if user.expires_at > now else "❌ Не активна"
     days_left = (user.expires_at - now).days if user.expires_at else 0
-    expires_formatted = user.expires_at.strftime("%d.%m.%Y %H:%M")+ " МСК"
+    expires_formatted = user.expires_at.strftime("%d.%m.%Y %H:%M") + " МСК"
 
     text = (
         f"Доступ: {status}\n"

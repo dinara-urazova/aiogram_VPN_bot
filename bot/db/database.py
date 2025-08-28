@@ -26,6 +26,7 @@ async def get_user_by_telegram_id(telegram_id: int) -> User | None:
         result = await async_session.execute(statement)
         return result.scalar_one_or_none()
 
+
 async def add_or_update_user(user_dto: UserDTO) -> None:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         user = await get_user_by_telegram_id(user_dto.telegram_id)
@@ -53,4 +54,3 @@ async def create_telegram_event(telegram_id: int, payload: dict) -> None:
         )
         async_session.add(new_event)
         await async_session.commit()
-

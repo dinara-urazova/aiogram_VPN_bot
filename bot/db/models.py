@@ -20,12 +20,12 @@ class User(Base):
     last_name: Mapped[str | None]
     username: Mapped[str | None]
     is_vpn_enabled: Mapped[bool] = mapped_column(
-        default=True, # по умолчанию True для новых пользователей
-        comment="Включен ли VPN для пользователя"
+        default=True,  # по умолчанию True для новых пользователей
+        comment="Включен ли VPN для пользователя",
     )
     expires_at: Mapped[datetime] = mapped_column(
         default=get_trial_expiry_date,
-        comment="Дата истечения подписки (с учетом free trial на 1 день)", # убрала None, тк никогда не будет None (funс создает значение, кот будет либо текущей, либо истекшей датой)
+        comment="Дата истечения подписки (с учетом free trial на 1 день)",  # убрала None, тк никогда не будет None (funс создает значение, кот будет либо текущей, либо истекшей датой)
     )
     birthday: Mapped[datetime | None] = mapped_column(Date, comment="Дата рождения")
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
