@@ -1,14 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import BigInteger, func, ForeignKey, Date
-from sqlalchemy import JSON
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.db.base import Base
 
 
 def get_trial_expiry_date() -> datetime:
-    return datetime.now() + timedelta(days=1)
+    return datetime.now(timezone.utc) + timedelta(days=1)
 
 
 class User(Base):
@@ -19,14 +18,24 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None]
-    expires_at: Mapped[datetime | None] = mapped_column(
+    is_vpn_enabled: Mapped[bool] = mapped_column(
+        default=True,  # по умолчанию True для новых пользователей
+        comment="Включен ли VPN для пользователя",
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=get_trial_expiry_date,
-        comment="Дата истечения подписки (с учетом free trial на 1 день)",
+        comment="Дата истечения подписки (с учетом free trial на 1 день)",  # убрала None, тк никогда не будет None (funс создает значение, кот будет либо текущей, либо истекшей датой)
     )
     birthday: Mapped[datetime | None] = mapped_column(Date, comment="Дата рождения")
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now(timezone.utc),
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )
 
 
@@ -36,7 +45,10 @@ class TelegramEvent(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger)
     payload: Mapped[dict] = mapped_column(JSON)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now(timezone.utc),
+    )
 
 
 class Payment(Base):
@@ -45,4 +57,7 @@ class Payment(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     amount: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now(timezone.utc),
+    )
