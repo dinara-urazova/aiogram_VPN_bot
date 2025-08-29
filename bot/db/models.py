@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, func, JSON
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.db.base import Base
