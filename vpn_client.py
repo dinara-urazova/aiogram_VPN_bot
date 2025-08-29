@@ -176,3 +176,11 @@ async def set_client_traffic(telegram_id: int, enable: bool):
         raise RuntimeError(f"No client found with telegam_id =  {telegram_id}")
     changes = {"enable": enable}
     return await _update_client(session_cookie, telegram_id, client, changes)
+
+
+async def enable_client(telegram_id: int):
+    return await set_client_traffic(telegram_id, True)
+
+
+async def disable_client(telegram_id: int):
+    return await set_client_traffic(telegram_id, False)

@@ -1,6 +1,7 @@
 from typing import Sequence
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -53,4 +54,24 @@ async def create_telegram_event(telegram_id: int, payload: dict) -> None:
             payload=payload,
         )
         async_session.add(new_event)
+        await async_session.commit()
+
+
+async def get_expired_vpn_users() -> Sequence[User]:
+    async with AsyncSession(bind=engine, autoflush=False) as async_session:
+        statement = select(User).where(
+            User.expires_at <= datetime.now(), User.is_vpn_enabled
+        )
+        result = await async_session.execute(statement)
+        return result.scalars().all()
+
+
+async def disable_vpn_in_db(telegram_id: int) -> None:
+    async with AsyncSession(bind=engine, autoflush=False) as async_session:
+        statement = (
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(is_vpn_enabled=False)
+        )
+        await async_session.execute(statement)
         await async_session.commit()

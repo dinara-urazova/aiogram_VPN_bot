@@ -17,7 +17,7 @@ async def status_button(message: Message):
         return
 
     status = "✅ Активна" if user.expires_at > now else "❌ Не активна"
-    days_left = (user.expires_at - now).days if user.expires_at else 0
+    days_left = max((user.expires_at - now).days, 0)
     expires_formatted = user.expires_at.strftime("%d.%m.%Y %H:%M") + " МСК"
 
     text = (
