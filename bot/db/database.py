@@ -1,5 +1,5 @@
 from typing import Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -60,7 +60,7 @@ async def create_telegram_event(telegram_id: int, payload: dict) -> None:
 async def get_expired_vpn_users() -> Sequence[User]:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         statement = select(User).where(
-            User.expires_at <= datetime.now(), User.is_vpn_enabled
+            User.expires_at <= datetime.now(timezone.utc), User.is_vpn_enabled
         )
         result = await async_session.execute(statement)
         return result.scalars().all()
