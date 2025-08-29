@@ -1,8 +1,10 @@
-from datetime import datetime
-from aiogram import Router, F
+from datetime import datetime, timezone
+
+from aiogram import F, Router
 from aiogram.types import Message
-from bot.keyboards import go_back_kb
+
 from bot.db import database
+from bot.keyboards import go_back_kb
 
 router = Router()
 
@@ -10,7 +12,7 @@ router = Router()
 @router.message(F.text == "ℹ️ Статус")
 async def status_button(message: Message):
     telegram_id = message.from_user.id
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     user = await database.get_user_by_telegram_id(telegram_id)
     if not user:
         await message.answer("Пользователь не найден.", reply_markup=go_back_kb())
@@ -18,7 +20,7 @@ async def status_button(message: Message):
 
     status = "✅ Активна" if user.expires_at > now else "❌ Не активна"
     days_left = max((user.expires_at - now).days, 0)
-    expires_formatted = user.expires_at.strftime("%d.%m.%Y %H:%M") + " МСК"
+    expires_formatted = user.expires_at.strftime("%d.%m.%Y %H:%M %Z")
 
     text = (
         f"Доступ: {status}\n"
