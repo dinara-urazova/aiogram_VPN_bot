@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from aiogram import F, Router
 from aiogram.types import Message
@@ -20,7 +21,8 @@ async def status_button(message: Message):
 
     status = "✅ Активна" if user.expires_at > now else "❌ Не активна"
     days_left = max((user.expires_at - now).days, 0)
-    expires_formatted = user.expires_at.strftime("%d.%m.%Y %H:%M %Z")
+    expires_msk = user.expires_at.astimezone(ZoneInfo("Europe/Moscow"))
+    expires_formatted = expires_msk.strftime("%d.%m.%Y %H:%M %Z")
 
     text = (
         f"Доступ: {status}\n"
