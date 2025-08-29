@@ -55,7 +55,7 @@ async def get_users_for_second_notification() -> Sequence[User]:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         statement = select(User).where(
             User.expires_at <= one_day_from_now,
-            User.first_notified_at.is_not(None), 
+            User.first_notified_at.is_not(None),
             User.second_notified_at.is_(None),
         )
         result = await async_session.execute(statement)
