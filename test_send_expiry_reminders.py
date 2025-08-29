@@ -12,6 +12,7 @@ from bot.db.database import (
 from bot.config_reader import env_config
 
 
+# добавить функцию сброса обеих дат уведомлений в -> null после успешной оплаты подписки (добавить в database.py)
 async def send_expiry_reminders(bot: Bot):
     users_first = await get_users_for_first_notification()
     for user in users_first:
