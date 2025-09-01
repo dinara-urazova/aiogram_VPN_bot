@@ -25,9 +25,17 @@ class User(Base):
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=get_trial_expiry_date,
-        comment="Дата истечения подписки (с учетом free trial на 1 день)",  # убрала None, тк никогда не будет None (funс создает значение, кот будет либо текущей, либо истекшей датой)
+        comment="Дата истечения подписки (с учетом free trial на 1 день)",
     )
-    birthday: Mapped[datetime | None] = mapped_column(Date, comment="Дата рождения")
+    first_notified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        comment="Уведомление за 3 дня до истечения срока оплаты",
+    )
+    second_notified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        comment="Уведомление за 1 день до истечения срока оплаты",
+    )
+    birthday: Mapped[Date | None] = mapped_column(Date, comment="Дата рождения")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.now(timezone.utc),
