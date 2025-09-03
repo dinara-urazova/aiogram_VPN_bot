@@ -113,12 +113,34 @@ async def create_telegram_event(telegram_id: int, payload: dict) -> None:
         await async_session.commit()
 
 
+async def enable_vpn_in_db(telegram_id: int) -> None:
+    async with AsyncSession(bind=engine, autoflush=False) as async_session:
+        statement = (
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(is_vpn_enabled=True)
+        )
+        await async_session.execute(statement)
+        await async_session.commit()
+
+
 async def disable_vpn_in_db(telegram_id: int) -> None:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         statement = (
             update(User)
             .where(User.telegram_id == telegram_id)
             .values(is_vpn_enabled=False)
+        )
+        await async_session.execute(statement)
+        await async_session.commit()
+
+
+async def set_expiry_date(telegram_id: int, days: int) -> None:
+    async with AsyncSession(bind=engine, autoflush=False) as async_session:
+        statement = (
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(expires_at=datetime.now(timezone.utc) + timedelta(days=days))
         )
         await async_session.execute(statement)
         await async_session.commit()

@@ -68,9 +68,7 @@ def _find_client_in_inbound(inbound: dict, telegram_id: int) -> dict | None:
     return client
 
 
-async def _create_client(
-    session_cookie: str, inbound_id: int, telegram_id: int
-) -> dict:
+async def _create_client(session_cookie: str, telegram_id: int) -> dict:
     inbound_id = env_config.inbound_id
     new_client_uuid = str(uuid.uuid4())
     settings = {
@@ -78,7 +76,7 @@ async def _create_client(
             {
                 "id": new_client_uuid,
                 "email": str(telegram_id),
-                "enable": True,
+                "enable": False,
                 "flow": "xtls-rprx-vision",
             }
         ],
@@ -107,6 +105,7 @@ async def _update_client(
     client_data = {
         "id": client_uuid,  # обяз параметры
         "email": str(telegram_id),
+        "flow": "xtls-rprx-vision",
         **new_properties,  # распаковка словаря (изменяемые параметры)
     }
     settings = {

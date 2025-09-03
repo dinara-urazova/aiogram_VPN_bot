@@ -50,10 +50,7 @@ async def send_expiry_reminders(bot: Bot):
 async def main() -> None:
     tg_token = env_config.telegram_token.get_secret_value()
     bot = Bot(token=tg_token)
-    try:
-        await send_expiry_reminders(bot)
-    finally:
-        await bot.session.close()
+    await send_expiry_reminders(bot)
 
 
 if __name__ == "__main__":
