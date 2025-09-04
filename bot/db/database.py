@@ -135,7 +135,8 @@ async def disable_vpn_in_db(telegram_id: int) -> None:
         await async_session.commit()
 
 
-async def set_expiry_date(telegram_id: int, days: int) -> None:
+async def extend_expires_at(telegram_id: int, days: int) -> None:
+    assert days > 0, "days must be positive"
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         statement = (
             update(User)

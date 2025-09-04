@@ -154,7 +154,7 @@ async def _build_vless_key(inbound: dict, client: dict, telegram_id: int) -> str
     return key_string
 
 
-async def get_client_key(telegram_id: int) -> str:
+async def get_vpn_key(telegram_id: int) -> str:
     session_cookie = await _login()
     inbound = await _get_inbound(session_cookie)
     client = _find_client_in_inbound(inbound, telegram_id)

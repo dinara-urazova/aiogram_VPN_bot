@@ -1,8 +1,8 @@
 import logging
 from aiogram import Router, F
 from aiogram.types import Message
-from vpn_client import get_client_key, enable_client
-from bot.db.database import enable_vpn_in_db, set_expiry_date, get_user_by_telegram_id
+from vpn_client import get_vpn_key, enable_client
+from bot.db.database import enable_vpn_in_db, extend_expires_at, get_user_by_telegram_id
 
 router = Router()
 
@@ -12,7 +12,7 @@ async def connect_button(message: Message):
     user_id = message.from_user.id
     try:
         user = await get_user_by_telegram_id(user_id)
-        key = await get_client_key(
+        key = await get_vpn_key(
             user_id
         )  # если новый пользователь, то он создается в панели (create_client)
         if key:
@@ -21,7 +21,7 @@ async def connect_button(message: Message):
             )  # включили VPN в панели (в тч исп-ся update_client)
             await enable_vpn_in_db(user_id)  # в БД включили VPN (is_vpn_enabled = True)
             if user.expires_at is None:  # новый пользователь
-                await set_expiry_date(
+                await extend_expires_at(
                     user_id, days=1
                 )  # в БД выставили expires_at (now + trial 1 день)
             text = f"<pre>{key}</pre>"
