@@ -105,7 +105,7 @@ async def _update_client(
     client_data = {
         "id": client_uuid,  # обяз параметры
         "email": str(telegram_id),
-        "flow": "xtls-rprx-vision",
+        "flow": "xtls-rprx-vision",  # обяз параметр
         **new_properties,  # распаковка словаря (изменяемые параметры)
     }
     settings = {

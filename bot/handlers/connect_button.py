@@ -12,9 +12,13 @@ async def connect_button(message: Message):
     user_id = message.from_user.id
     try:
         user = await get_user_by_telegram_id(user_id)
-        key = await get_client_key(user_id)
+        key = await get_client_key(
+            user_id
+        )  # если новый пользователь, то он создается в панели (create_client)
         if key:
-            await enable_client(user_id)  # включили VPN в панели
+            await enable_client(
+                user_id
+            )  # включили VPN в панели (в тч исп-ся update_client)
             await enable_vpn_in_db(user_id)  # в БД включили VPN (is_vpn_enabled = True)
             if user.expires_at is None:  # новый пользователь
                 await set_expiry_date(
