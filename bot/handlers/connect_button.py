@@ -13,17 +13,18 @@ async def connect_button(message: Message):
     user_id = message.from_user.id
     try:
         user = await get_user_by_telegram_id(user_id)
-        if user.expires_at and user.expires_at <= datetime.now(
+        is_user_expired = user.expires_at and user.expires_at <= datetime.now(
             timezone.utc
-        ):  # 1) действующий пользователь с истекшей подпиской
+        )
+        if is_user_expired:
             await message.answer(
-                "Ваш доступ истёк. Пожалуйста, оплатите, чтобы продолжить пользоваться VPN"
+                "Доступ к VPN приостановлен. Для включения требуется оплата."
             )
             return
-        key = await get_vpn_key(
+        vpn_key = await get_vpn_key(
             user_id
         )  # 2) новый либо действующий пользователь (если новый то передам enable: True в create_client)
-        if not key:
+        if not vpn_key:
             await message.answer("❌ Не удалось получить VPN ключ.")
             return
         if user.expires_at is None:  # новый пользователь
@@ -31,7 +32,7 @@ async def connect_button(message: Message):
             await extend_expires_at(
                 user_id, days=1
             )  # в БД выставили expires_at (now + trial 1 день)
-        text = f"<pre>{key}</pre>"
+        text = f"<pre>{vpn_key}</pre>"
         await message.answer(
             f"{text}\n 👆 Это ваш VPN ключ. Коснитесь, чтобы скопировать"
         )

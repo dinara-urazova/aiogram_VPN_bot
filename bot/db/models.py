@@ -14,12 +14,12 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None]
-    is_vpn_enabled: Mapped[bool | None] = mapped_column(
-        comment="Включен ли VPN для пользователя",
+    is_3x_ui_key_enabled: Mapped[bool | None] = mapped_column(
+        comment="Включен ли VPN для пользователя. Зеркально отражает состояние ключа в панели 3x-ui.",
     )
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        comment="Дата истечения подписки",
+        comment="Дата истечения подписки. NULL если ещё не запрашивался VPN ключ",
     )
     first_notified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
