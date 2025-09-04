@@ -22,19 +22,19 @@ async def connect_button(message: Message):
             return
         key = await get_vpn_key(
             user_id
-        )  # 2) новый либо действующий (если новый, то включаем VPN в create_client)
-        if key:
-            if user.expires_at is None:  # новый пользователь
-                await enable_vpn_in_db(user_id)  # включение VPN в БД
-                await extend_expires_at(
-                    user_id, days=1
-                )  # в БД выставили expires_at (now + trial 1 день)
-            text = f"<pre>{key}</pre>"
-            await message.answer(
-                f"{text}\n 👆 Это ваш VPN ключ. Коснитесь, чтобы скопировать"
-            )
-        else:
+        )  # 2) новый либо действующий пользователь (если новый то передам enable: True в create_client)
+        if not key:
             await message.answer("❌ Не удалось получить VPN ключ.")
+            return
+        if user.expires_at is None:  # новый пользователь
+            await enable_vpn_in_db(user_id)  # включение VPN в БД
+            await extend_expires_at(
+                user_id, days=1
+            )  # в БД выставили expires_at (now + trial 1 день)
+        text = f"<pre>{key}</pre>"
+        await message.answer(
+            f"{text}\n 👆 Это ваш VPN ключ. Коснитесь, чтобы скопировать"
+        )
     except Exception as e:
         logging.error(f"Exception in connect_button: {e}")
         await message.answer("❌ Произошла ошибка при подключении.")
