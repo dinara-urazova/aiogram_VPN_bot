@@ -76,7 +76,7 @@ async def _create_client(session_cookie: str, telegram_id: int) -> dict:
             {
                 "id": new_client_uuid,
                 "email": str(telegram_id),
-                "enable": False,
+                "enable": True,
                 "flow": "xtls-rprx-vision",
             }
         ],
