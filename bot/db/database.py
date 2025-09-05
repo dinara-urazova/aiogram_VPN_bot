@@ -118,7 +118,7 @@ async def enable_vpn_in_db(telegram_id: int) -> None:
         statement = (
             update(User)
             .where(User.telegram_id == telegram_id)
-            .values(is_3x_ui_key_enabled=True)  
+            .values(is_3x_ui_key_enabled=True)
         )
         await async_session.execute(statement)
         await async_session.commit()
