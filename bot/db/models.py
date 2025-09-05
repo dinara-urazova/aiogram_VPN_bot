@@ -1,13 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.db.base import Base
-
-
-def get_trial_expiry_date() -> datetime:
-    return datetime.now(timezone.utc) + timedelta(days=1)
 
 
 class User(Base):
@@ -18,14 +14,12 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None]
-    is_vpn_enabled: Mapped[bool] = mapped_column(
-        default=True,  # по умолчанию True для новых пользователей
-        comment="Включен ли VPN для пользователя",
+    is_3x_ui_key_enabled: Mapped[bool | None] = mapped_column(
+        comment="Включен ли VPN для пользователя. Зеркально отражает состояние ключа в панели 3x-ui.",
     )
-    expires_at: Mapped[datetime] = mapped_column(
+    expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        default=get_trial_expiry_date,
-        comment="Дата истечения подписки (с учетом free trial на 1 день)",
+        comment="Дата истечения подписки. NULL если ещё не запрашивался VPN ключ",
     )
     first_notified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),

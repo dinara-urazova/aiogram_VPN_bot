@@ -31,7 +31,7 @@ async def get_user_by_telegram_id(telegram_id: int) -> User | None:
 async def get_expired_vpn_users() -> Sequence[User]:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         statement = select(User).where(
-            User.expires_at <= datetime.now(timezone.utc), User.is_vpn_enabled
+            User.expires_at <= datetime.now(timezone.utc), User.is_3x_ui_key_enabled
         )
         result = await async_session.execute(statement)
         return result.scalars().all()
@@ -113,12 +113,35 @@ async def create_telegram_event(telegram_id: int, payload: dict) -> None:
         await async_session.commit()
 
 
+async def enable_vpn_in_db(telegram_id: int) -> None:
+    async with AsyncSession(bind=engine, autoflush=False) as async_session:
+        statement = (
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(is_3x_ui_key_enabled=True)
+        )
+        await async_session.execute(statement)
+        await async_session.commit()
+
+
 async def disable_vpn_in_db(telegram_id: int) -> None:
     async with AsyncSession(bind=engine, autoflush=False) as async_session:
         statement = (
             update(User)
             .where(User.telegram_id == telegram_id)
-            .values(is_vpn_enabled=False)
+            .values(is_3x_ui_key_enabled=False)
+        )
+        await async_session.execute(statement)
+        await async_session.commit()
+
+
+async def extend_expires_at(telegram_id: int, days: int) -> None:
+    assert days > 0, "days must be positive"
+    async with AsyncSession(bind=engine, autoflush=False) as async_session:
+        statement = (
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(expires_at=datetime.now(timezone.utc) + timedelta(days=days))
         )
         await async_session.execute(statement)
         await async_session.commit()
